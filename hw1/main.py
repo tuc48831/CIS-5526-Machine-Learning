@@ -6,112 +6,27 @@ Created on Wed Sep 27 10:40:44 2017
 """
 
 import numpy as np
-import random as rand
 import time
-from scipy.spatial import distance as dist
 
-def returnYs():
+def getData():
+    #get data
+    
+    #split into train and test
+    
+    #scale data
+    
+    return None
+    
+def scaleData():
+    #magnitude
+    
+    #variance
+    
+    #PCA
+    
     return None
 
-def findNNs(test_x, train_x, train_y, num_nn):
-
-    #initialize arrays
-    neighbors = []
-    #use cdist to calculate all distances at once
-    temp = []    
-    temp = dist.cdist(test_x, train_x, 'euclidean')
-    #sort the array by the distances
-    for i in range(len(temp)):
-        #print(temp[i])
-        #dont include the 0th element, it will be 0 because the lowest distance is to itself
-        index_y = temp[i].argsort()[1:num_nn+1]
-        instance = []
-        
-        for y in index_y:
-            instance.append(train_y.item(y))
-        neighbors.append(instance)
-    #make it a numpy array and return it
-    #print(str(neighbors))
-    return neighbors
-
-def test_knn(train_x, train_y, test_x, num_nn):
-    pred_y = []
-    #iterate through test data
-    #for i in range(len(test_x)):
-    
-    #find the array corresponding to the num NN closest neighbors
-    tempClosest = findNNs(test_x, train_x, train_y, num_nn)
-    #run some statistics on that array
-    
-    for i in range(len(tempClosest)):
-        string_counter = {}
-        for k in tempClosest[i]:
-            if k in string_counter:
-                string_counter[k] += 1
-            else:
-                string_counter[k] = 1
-        sortedList = sorted(string_counter, key = string_counter.get, reverse = True)
-        prediction = sortedList[0]
-        #append that prediction to my return list
-        pred_y.append(prediction)
-    
-    
-    pred_y = np.array(pred_y)
-    return pred_y
-
-def condense_data(train_x, train_y):
-    condensed_idx = []
-    ran = np.random.randint(0,len(train_x))
-    
-    #initialize subset with a single training example
-    condensed_idx.append(ran)
-    #create an array structure to house data and classify every point as being neighbored to the original one
-    allTrain = []
-    for i in range(len(train_x)):
-        allTrain.append(condensed_idx[0])
-    #iterate through the list and check if my actual classification differs from what I've been assigned
-    correctly_classified = [];
-    incorrectly_classified = [];
-    for i in range(len(allTrain)):
-        if train_y.item(allTrain[i]).lower() == train_y.item(i).lower():
-            correctly_classified.append(i)
-        else:
-            incorrectly_classified.append(i)
-    temp = 0;       
-    while( len(incorrectly_classified) > 0  and len(incorrectly_classified) > temp):
-        ran = np.random.randint(0,len(incorrectly_classified))
-        condensed_idx.append(incorrectly_classified[ran])
-        new_c_c = []
-        new_i_c = []
-        
-        for i in range(len(incorrectly_classified)):
-            incorrectly_classified[i] = incorrectly_classified[ran]
-        
-        for i in range(len(incorrectly_classified)):
-            
-            if train_y.item(allTrain[incorrectly_classified[ran]]).lower() == train_y.item(i).lower():
-                new_c_c.append(i)
-            else:
-                new_i_c.append(i)
-        temp = len(incorrectly_classified)
-        correctly_classified = new_c_c
-        incorrectly_classified = new_i_c
-        
-        #for an incorrectly classi
-    condensed_idx = np.array(condensed_idx)
-    return condensed_idx
-
-def shortenTraining(train_x, train_y, condensed_idx):
-    temp_x = []
-    temp_y = []
-    for i in range(len(condensed_idx)):
-        temp_x.append(train_x[i])
-        temp_y.append(train_y[i])
-    temp_x = np.array(temp_x)
-    temp_y = np.array(temp_y)
-    return temp_x, temp_y
-
-def adjustY(y, letter):
+def OVAadjustY(y, letter):
     #loop through train_y
     for i in range(len(y)):
         #adjusting the entries to +/- 1 if they match the supplied letter
@@ -119,76 +34,13 @@ def adjustY(y, letter):
             y[i] = 1
         else:
             y[i] = -1
-    y = np.array(y, np.float64)
+            y = np.array(y, np.float64)
     return y
 
 def adjustX(x):
     #insert a 1 into xo for all of the training data for the bias term
     x = np.insert(x, 0, 1, axis=1)
     return x
-
-def calcError(train_x, train_y, z, length):
-    #from the calc Ein slide, get 1/n
-    overN = 1/length
-    #get the matrix multiplication of the transpose adn the weights
-    geo = np.matmul(train_x, z)
-    #subtract the y
-    geo = geo - train_y
-    #take the magnitude
-    geo = np.linalg.norm(geo)
-    #put it all together along with the squared element
-    return overN*np.power(geo, 2)
-
-def train_pocket(train_x, train_y, num_iters):
-    #num iters is a np float 64 so i have to change it
-    num_iters = int(num_iters)
-    #store the length, initialize w as my final and z as my temp
-    length = len(train_x)
-    w = []
-    #give z a non-random starting point by calculating the dot product of the pinv(x) and y
-    w = np.dot(np.linalg.pinv(train_x), train_y)
-    #then num iterations times
-    for i in range(num_iters):
-        #pick a random point
-        test = rand.randint(0,length-1)
-        #while the signs are not equal between wTx and y, keep repicking
-        temp = length
-        #this is super dangerous but I kept getting stuck looking for a misclassified point
-        #if the data is somehow linearly seperable, this gets stuck in a loop
-        #i got stuck in this loop 3 separate times so I invented an escape mechanism that is self-admittedly completely arbitrary
-        while(np.dot(np.transpose(w), train_x[test]) * train_y[test] >= 0):
-            temp-=1
-            test = rand.randint(0,length-1)
-            if(temp<0):
-                return w
-        #calculate new weights
-        temp = w + train_y[test]*train_x[test]
-        #calculate errors of new weights and old weights
-        errorTemp = calcError(train_x, train_y, w, length)
-        errorW = calcError(train_x, train_y, w, length)
-        #swap them if new weights result in less error
-        if(errorTemp < errorW):
-            w = temp
-    w = np.array(w, np.float64)
-    
-    return w
-
-def test_pocket(w, test_x):
-    pred_y = []
-    #w comes as a 17,1 array, and using squeeze is a view so it isn't kept between functions so I have to recall it here
-    w = w.squeeze()
-    #iterate through whole text_x
-    for i in range(len(test_x)):
-        #get dot product of weights and entry
-        temp = np.dot(w, test_x[i])
-        if(temp > 0):
-            pred_y.append(1)
-        elif(temp < 0):
-            pred_y.append(-1)
-        else:
-            pred_y.append(0)
-    pred_y = np.array(pred_y)
-    return pred_y
 
 def compute_accuracy(test_y, pred_y):
     lenTest = len(test_y)
@@ -281,6 +133,8 @@ def createTest_xAndy(testing_data):
     return test_x, test_y
 
 def main():
+    
+    train_x, test_x, train_y, test_y = getData()
     #open file
     with open("letter-recognition.data") as file:
         total = []
@@ -382,7 +236,8 @@ def main():
         print("For condensed knn with num_train: " + str(i) + 
               " the accuracy is: " + str(acc) +
               " the time to condense is: " + str(condense_time) +
-              " the time to execute is: " + str(duration))
+              " the time to execute is: " + str(duration) +
+              " the len of condensed is:" + str(len(condensed_idx)))
  
     
     print(confusion_table)
