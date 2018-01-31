@@ -7,13 +7,29 @@ Created on Wed Sep 27 10:40:44 2017
 
 import numpy as np
 import time
+from sklearn import preprocessing
 
 def getData():
     #get data
     
+    #open file
+    with open("letter-recognition.data") as file:
+        total = []
+        #go line by line, removing extraneous info, splitting into a 17d array, append it to total
+        for line in file:
+            line = line.strip("\n")
+            line = line.split(",")
+            total.append(line)
+    #a normal python array to store the slices that represent my training and my testing
+    training = total[:15000]
+    testing = total[15000:]
     #split into train and test
+    # convert to 2 np arrays, one is 15000 x 17, the other is 5000 x 17
+    training_data = np.array(training)
+    testing_data = np.array(testing)
     
     #scale data
+    
     
     return None
     
@@ -135,20 +151,7 @@ def createTest_xAndy(testing_data):
 def main():
     
     train_x, test_x, train_y, test_y = getData()
-    #open file
-    with open("letter-recognition.data") as file:
-        total = []
-        #go line by line, removing extraneous info, splitting into a 17d array, append it to total
-        for line in file:
-            line = line.strip("\n")
-            line = line.split(",")
-            total.append(line)
-    #a normal python array to store the slices that represent my training and my testing
-    training = total[:15000]
-    testing = total[15000:]
-    # convert to 2 np arrays, one is 15000 x 17, the other is 5000 x 17
-    training_data = np.array(training)
-    testing_data = np.array(testing)
+    
    
     #list of the different sizes i need to train
     num_train = [100, 1000, 2000, 5000, 10000, 15000]
