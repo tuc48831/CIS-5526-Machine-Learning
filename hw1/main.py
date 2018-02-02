@@ -10,37 +10,54 @@ import time
 from sklearn import preprocessing
 
 def getData():
-    #get data
-    
     #open file
     with open("letter-recognition.data") as file:
-        total = []
+        total_x = []
+        total_y = []
         #go line by line, removing extraneous info, splitting into a 17d array, append it to total
         for line in file:
             line = line.strip("\n")
             line = line.split(",")
-            total.append(line)
-    #a normal python array to store the slices that represent my training and my testing
-    training = total[:15000]
-    testing = total[15000:]
+            total_x.append(line[:-1])
+            total_y.append(line[-1])
     #split into train and test
-    # convert to 2 np arrays, one is 15000 x 17, the other is 5000 x 17
-    training_data = np.array(training)
-    testing_data = np.array(testing)
-    
+    train_x = total_x[:15000]
+    train_y = total_y[:15000]
+    test_x = total_x[15000:]
+    test_y = total_y[15000:]
+    # convert to np arrays
+    train_x = np.array(train_x)
+    train_y = np.array(train_y)
+    test_x = np.array(test_x)
+    test_y = np.array(test_y)
     #scale data
+    train_x, test_x = scaleData(train_x, test_x)
     
+    return train_x, train_y, test_x, test_y
     
-    return None
+def scaleData(train_x, test_x):
+
+    #get means of training data
+    means = np.mean(train_x)
+    #subtract the means from the data
+    train_x = np.subtract(train_x, means)
+    test_x = np.subtract(test_x, means)
     
-def scaleData():
-    #magnitude
+    #get variances of training data
+    variances = np.var(train_x)
+    #divide the means into the data
+    train_x = np.divide(train_x, variances)
+    test_x = np.divide(test_x, variances)
     
-    #variance
-    
-    #PCA
-    
-    return None
+    #normalize example length
+    for row in train_x:
+        magnitude = np.linalg.norm(row)
+        row = np.divide(row, magnitude)
+    for row in test_x:
+        magnitude = np.linalg.norm(row)
+        row = np.divide(row, magnitude)
+        
+    return train_x, test_x
 
 def OVAadjustY(y, letter):
     #loop through train_y
@@ -149,8 +166,8 @@ def createTest_xAndy(testing_data):
     return test_x, test_y
 
 def main():
-    
-    train_x, test_x, train_y, test_y = getData()
+    #get the data from the file, and scale/normalize it
+    train_x, train_y, test_x, test_y = getData()
     
    
     #list of the different sizes i need to train
