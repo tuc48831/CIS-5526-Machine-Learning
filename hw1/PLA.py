@@ -12,7 +12,8 @@ class PLA:
         self.train_y = train_y
         self.test_x = test_x
         self.test_y = test_y
-        self.pred = None
+        self.pred_y = None
+        self.weights = None
     
     def calcErrorPLA(train_x, train_y, z, length):
         #from the calc Ein slide, get 1/n
@@ -26,14 +27,15 @@ class PLA:
         #put it all together along with the squared element
         return overN*np.power(geo, 2)
     
-    def train_pocket(train_x, train_y, num_iters):
-        #num iters is a np float 64 so i have to change it
-        num_iters = int(num_iters)
+    def train_pocket(self):
         #store the length, initialize w as my final and z as my temp
-        length = len(train_x)
+        length = len(self.train_x)
+        #num iters is a np float 64 so i have to change it
+        num_iters = int(2*np.sqrt(length))
+        
         w = []
         #give z a non-random starting point by calculating the dot product of the pinv(x) and y
-        w = np.dot(np.linalg.pinv(train_x), train_y)
+        w = np.dot(np.linalg.pinv(self.train_x), self.train_y)
         #try a random starting weight
         
         #then num iterations times
@@ -45,34 +47,31 @@ class PLA:
             #this is super dangerous but I kept getting stuck looking for a misclassified point
             #if the data is somehow linearly seperable, this gets stuck in a loop
             #i got stuck in this loop 3 separate times so I invented an escape mechanism that is self-admittedly completely arbitrary
-            while(np.dot(np.transpose(w), train_x[test]) * train_y[test] >= 0):
+            while(np.dot(np.transpose(w), self.train_x[test]) * self.train_y[test] >= 0):
                 temp-=1
                 test = rand.randint(0,length-1)
                 if(temp<0):
                     return w
             #calculate new weights
-            temp = w + train_y[test]*train_x[test]
+            temp = w + self.train_y[test]*self.train_x[test]
             #calculate errors of new weights and old weights
-            errorTemp = calcErrorPLA(train_x, train_y, w, length)
-            errorW = calcErrorPLA(train_x, train_y, w, length)
+            errorTemp = self.calcErrorPLA(self.train_x, self.train_y, w, length)
+            errorW = self.calcErrorPLA(self.train_x, self.train_y, w, length)
             #swap them if new weights result in less error
             if(errorTemp < errorW):
                 w = temp
         w = np.array(w, np.float64)
-        
-        return w
+        self.weights = w
+        return None
     
-    
-
-
-    def test_pla(w, test_x):
+    def test_pla(self):
         pred_y = []
         #w comes as a 17,1 array, and using squeeze is a view so it isn't kept between functions so I have to recall it here
-        w = w.squeeze()
+        w = self.w.squeeze()
         #iterate through whole text_x
-        for i in range(len(test_x)):
+        for i in range(len(self.test_x)):
             #get dot product of weights and entry
-            temp = np.dot(w, test_x[i])
+            temp = np.dot(w, self.test_x[i])
             if(temp > 0):
                 pred_y.append(1)
             elif(temp < 0):
@@ -80,4 +79,14 @@ class PLA:
             else:
                 pred_y.append(0)
         pred_y = np.array(pred_y)
+        self.pred_y = pred_y
         return pred_y
+    
+def testing():
+    return None
+
+def main():
+    return None
+
+if __name__ == "__main__":
+    testing()

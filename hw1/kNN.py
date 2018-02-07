@@ -111,3 +111,12 @@ class kNN:
         temp_x = np.array(temp_x)
         temp_y = np.array(temp_y)
         return temp_x, temp_y
+    
+def testing():
+    return None
+
+def main():
+    return None
+
+if __name__ == "__main__":
+    testing()
