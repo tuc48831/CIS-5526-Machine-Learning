@@ -23,6 +23,7 @@ def get_data():
             line = line.split(",")
             total_x.append(line[1:])
             total_y.append(line[0])
+    total_x = add_bias(total_x)
     #split into train and test
     train_x = total_x[:15000]
     train_y = total_y[:15000]
@@ -72,7 +73,7 @@ def reclassify_y_ova(y, letter):
         if (y[i].lower() == letter.lower() ):
             new_y.append(1)
         else:
-            new_y.append(-1)
+            new_y.append(0)
     new_y = np.array(new_y, np.float64)
     return new_y
 
@@ -99,7 +100,7 @@ def create_train_subsample(train_x, train_y, num_train):
     return new_train_x, new_train_y
 
 #tested and seems ok
-def compute_accuracy(test_y, pred_y, confusion_bool):
+def compute_accuracy(test_y, pred_y, letter, confusion_bool):
     #get the lengths of the test and prediction, if they don't match something went wrong and exit
     lenTest = len(test_y)
     lenPred = len(pred_y)
@@ -115,7 +116,7 @@ def compute_accuracy(test_y, pred_y, confusion_bool):
     if(confusion_bool):
         confusion_matrix = defaultdict(int)
     #since PLA converts test y to 0's or 1's i check if I'm running computer acc on a pla test/pred
-    if(test_y[0] == -1 or test_y[0] == 1 ):
+    if(test_y[0] == 0 or test_y[0] == 1 ):
         pla_bool = True
     #if it's not an +/- 1, im comparing knn in the form of strings, not numbers, so i need to calculate it differently
     else:
@@ -127,10 +128,10 @@ def compute_accuracy(test_y, pred_y, confusion_bool):
             if(test_y[i] > 0 and pred_y[i] > 0):
                 confusion_matrix["pyay"] += 1
                 numRight += 1
-            elif(test_y[i] > 0 and pred_y[i] < 0):
+            elif(test_y[i] > 0 and pred_y[i] <= 0):
                 confusion_matrix["pnay"] += 1
                 numWrong += 1
-            elif(test_y[i] < 0 and pred_y[i] > 0):
+            elif(test_y[i] <= 0 and pred_y[i] > 0):
                 confusion_matrix["pyan"] += 1
                 numWrong +=1
             else:
@@ -156,9 +157,9 @@ def compute_accuracy(test_y, pred_y, confusion_bool):
                 
     numRight = float(numRight)
     lenTest = float(lenTest)
-    print("The number right is:" + str(numRight) + ", the number wrong is: " + str(numWrong) + ", the percentage is: " + str(numRight/lenTest))
+    print("For the letter " + letter + " the number right is:" + str(numRight) + ", the number wrong is: " + str(numWrong) + ", the percentage is: " + str(numRight/lenTest))
     if(confusion_bool):
-        print("The confusion matrix is:")
+        print("The confusion matrix for the letter " + letter + " is:")
         print(confusion_matrix)
     return numRight/lenTest
 
@@ -178,30 +179,30 @@ def main():
         rollingAccuracy = 0.0
         for letter in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']:
             #create a set of training data with a bias term, adjust y to be +/- 1
-            temp_train_x = add_bias(sub_train_x)
             temp_train_y = reclassify_y_ova(sub_train_y, letter)
-            temp_test_x = add_bias(test_x)
             temp_test_y = reclassify_y_ova(test_y, letter)
             #create PLA object
-            pla_object = PLA(temp_train_x, temp_train_y, temp_test_x, temp_test_y)
+            pla_object = PLA.PLA(sub_train_x, temp_train_y, test_x)
             #train the PLA object
             pla_object.train_pocket()
             #get the predictions from the PLA object
-            pred_y = pla_object.test_pla()
+            pred_y = pla_object.generate_predictions()
             #get the accuracy
-            acc = compute_accuracy(temp_test_y, pred_y, True)
+            acc = compute_accuracy(temp_test_y, pred_y, letter, True)
             #add it to my total accuracy
             rollingAccuracy += acc
         end = time.time()
         duration = end-start
         rollingAccuracy /= 26
         #mark the end time, get the duration, get the average over the whole alphabet, print the information
-        print("For pla with num_train: " + str(i) + 
+        print("===============================================================================================================================================================")
+        print("For pla with num_examples: " + str(i) + 
               " averaged over all 26 letters is: " + str(rollingAccuracy) + 
               " the time to execute is: " + str(duration))
-        
+    return None
         #numpy arrays are referential, so any edits I do happen in the real object, not a copy of the object in a functions stack
         #this means i need to regenerate the training set to "undo" the edits i needed for OVA
+    for i in range(1):
         train_x, train_y = create_train_subsample(train_x, train_y, i)
         #k-NN values as range, 1, 3, 5, 7, 9
         for k in range(1,10,2):
@@ -307,9 +308,9 @@ def testing():
     
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    testing()
+    #testing()
     
     
     
